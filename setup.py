@@ -61,6 +61,7 @@ class Date:
 
     def __repr__(self) -> str:
         """Возвращает дату в формате Date(day, month, year)"""
+        return f"Date({self.day})"
 
     def is_leap_year(self, year) -> bool:
         """Проверяет, является ли год високосным"""
@@ -72,7 +73,7 @@ class Date:
 
     def get_max_day(self, month: int, year: int) -> int:
         """Возвращает максимальное количество дней в месяце для указанного года"""
-        if self.is_leap_year(self, year):
+        if self.is_leap_year(year):
             return self.days_leap[month - 1][1]
         else:
             return self.days[month - 1][1]
@@ -82,7 +83,7 @@ class Date:
         if month > 12:
             return False
 
-        if self.is_leap_year(self, year):
+        if self.is_leap_year(year):
             if day > self.days_leap[month - 1][1]:
                 return False
         elif day > self.days[month - 1][1]:
