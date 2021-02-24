@@ -1,31 +1,20 @@
 from typing import Optional, overload
-
+import logging
+logger = logging.getLogger(__name__)
 
 class TimeDelta:
     def __init__(self, days: Optional[int] = None, months: Optional[int] = None, years: Optional[int] = None):
-        if not days:
-            self.day = 0
-        else:
-            self.day = days
-
-        if not months:
-            self.month = 0
-        else:
-            self.month = months
-
-        if not years:
-            self.year = 0
-        else:
-            self.year = years
+        logger.debug("start init")
+        self.day = days or 0
+        self.month = months or 0
+        self.year = years or 0
 
 
 class Date:
     """Класс для работы с датами"""
-    days = ((1, 31), (2, 28), (3, 31), (4, 30), (5, 31), (6, 30),
-            (7, 31), (8, 31), (9, 30), (10, 31), (11, 30), (12, 31))
+    days = (31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
 
-    days_leap = ((1, 31), (2, 29), (3, 31), (4, 30), (5, 31), (6, 30),
-                 (7, 31), (8, 31), (9, 30), (10, 31), (11, 30), (12, 31))
+    days_leap = (31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
 
     @overload
     def __init__(self, day: int, month: int, year: int):
@@ -37,9 +26,9 @@ class Date:
 
     def __init__(self, *args):
         if len(args) == 3 and all(isinstance(i, int) for i in args):
-            self.day = int(args[0])
-            self.month = int(args[1])
             self.year = int(args[2])
+            self.month = int(args[1])
+            self.day = int(args[0])
         elif len(args) == 1 and isinstance(args[0], str):
             values = args[0].split('.')
             if len(values) != 3:
@@ -48,45 +37,40 @@ class Date:
         else:
             raise ValueError("Incorrect init value")
 
-        self.days = ((1, 31), (2, 28), (3, 31), (4, 30), (5, 31), (6, 30),
-                     (7, 31), (8, 31), (9, 30), (10, 31), (11, 30), (12, 31))
-        self.days_leap = ((1, 31), (2, 29), (3, 31), (4, 30), (5, 31), (6, 30),
-                          (7, 31), (8, 31), (9, 30), (10, 31), (11, 30), (12, 31))
 
     def __str__(self) -> str:
         """Возвращает дату в формате dd.mm.yyyy"""
-        return str(self.day // 10) + str(self.day % 10) + "." + \
-               str(self.month // 10) + str(self.month % 10) + "." + \
-               str(self.year // 1000) + str((self.year // 100) % 10) + str((self.year // 10) % 10) + str(self.year % 10)
+        return f"{self.day:02d}.{self.month:02d}.{self.year:04d}"
 
     def __repr__(self) -> str:
         """Возвращает дату в формате Date(day, month, year)"""
-        return f"Date({self.day})"
+        return f"Date({self.day}, {self._month}, {self._year})"
 
-    def is_leap_year(self, year) -> bool:
+
+    @classmethod
+    def is_leap_year(cls, year) -> bool:
         """Проверяет, является ли год високосным"""
         if not isinstance(year, int):
             raise ValueError
-        if year % 4 != 0 or (year % 100 == 0 and year % 400 != 0):
+        if year % 4 != 0 or (year % 100 == 0 and year % 400 != 0): # надо ли тут cls.year или просто year
             return False
         return True
 
-    def get_max_day(self, month: int, year: int) -> int:
+    @classmethod
+    def get_max_day(cls, month: int, year: int) -> int:
         """Возвращает максимальное количество дней в месяце для указанного года"""
-        if self.is_leap_year(year):
-            return self.days_leap[month - 1][1]
+        if cls.is_leap_year(year):
+            return cls.days_leap[month - 1]
         else:
-            return self.days[month - 1][1]
+            return cls.days[month - 1]
 
-    def is_valid_date(self, day: int, month: int, year: int):
+    @classmethod
+    def is_valid_date(cls, day: int, month: int, year: int):
         """Проверяет, является ли дата корректной"""
-        if month > 12:
+        if month < 1 or month > 12:
             return False
-
-        if self.is_leap_year(year):
-            if day > self.days_leap[month - 1][1]:
-                return False
-        elif day > self.days[month - 1][1]:
+        """TODO: разобраться тут"""
+        if day < 0 or day > cls.get_max_day(month, year):
             return False
         return True
 
@@ -97,10 +81,11 @@ class Date:
     @day.setter
     def day(self, value: int):
         """value от 1 до 31. Проверять значение и корректность даты"""
-        if 1 <= value <= 31:
-            self._day = value
-        else:
+        if not Date.is_valid_date(value, self.month, self.year):
             raise ValueError("Incorrect day")
+        self._day = value
+
+
 
     @property
     def month(self):
@@ -127,20 +112,22 @@ class Date:
         """Разница между датой self и other (-)"""
         days_my = self.day
         days_other = other.day
-        for i in range(self.month - 1):
-            days_my += self.days[i][1]
-        for i in range(other.month - 1):
-            days_other += other.days[i][1]
+        for ye in range(self.year):
+            days_my += 366 if self.is_leap_year(ye) else 365
+        for ye in range(other.year):
+            days_other += 366 if self.is_leap_year(ye) else 365
 
-        if self.month > 2:
+        for i in range(self.month - 1):
+            days_my += self.days[i]
+        for i in range(other.month - 1):
+            days_other += other.days[i]
+
+        if self.is_leap_year(self.year) and self.month > 2:
             days_my += 1
-        if other.month > 2:
+        if self.is_leap_year(other.year) and other.month > 2:
             days_other += 1
 
-        days_my += self.year * 365 + self.year // 4
-        days_other += other.year * 365 + other.year // 4
-
-        return max(days_my, days_other) - min(days_my, days_other)
+        return days_my - days_other
 
     def __add__(self, other: TimeDelta) -> "Date":
         """Складывает self и некий timedeltа. Возвращает НОВЫЙ инстанс Date, self не меняет (+)"""
@@ -149,24 +136,26 @@ class Date:
         year = self.year
 
         all_days = other.day
-        for i in range(other.month - 1):
-            all_days += self.days[i][1]
+        for i in range(other.month):
+            all_days += self.days[i]
         if other.month > 2:
             all_days += 1
 
-        all_days += other.year * 365 + other.year // 4
+        """TODO понять это"""
+        for ye in range(self.year):
+            all_days += 366 if self.is_leap_year(ye) else 365
 
         for i in range(0, all_days):
             day += 1
             if self.is_leap_year(year):
-                if day > self.days_leap[month - 1][1]:
+                if day > self.days_leap[month - 1]:
                     day = 1
                     month += 1
                     if month > 12:
                         month = 1
                         year += 1
             else:
-                if day > self.days[month - 1][1]:
+                if day > self.days[month - 1]:
                     day = 1
                     month += 1
                     if month > 12:
@@ -175,13 +164,25 @@ class Date:
 
         return Date(day, month, year)
 
+
     def __iadd__(self, other: TimeDelta) -> "Date":
         """Добавляет к self некий timedelta меняя сам self (+=)"""
         return self + other
 
 
-if __name__ == "__main__":
+
+
+def main():
+    logging.basicConfig()
+    logger.setLevel(logging.DEBUG)
+    logger.debug("start main")
     d1 = Date(30, 12, 2021)
-    d2 = Date(1, 3, 2029)
-    d1 += TimeDelta(1)
-    print(d1.__str__())
+    d1.day = 31
+    d2 = Date(1, 2, 2020)
+    d2.day = 29
+    # d1 += TimeDelta(1)
+    print(repr(d1-d2))
+    print(d2)
+
+if __name__ == "__main__":
+    main()
