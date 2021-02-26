@@ -25,6 +25,10 @@ class Date:
         """Создание даты из строки формата dd.mm.yyyy"""
 
     def __init__(self, *args):
+        """ ВАЖНО! Сначала устанавливаются год и месяц, и только потом - день. Потому
+что при установке дня проверяется правильность даты, для чего нужны год и
+месяц. Например, 29 число может быть неправильным в феврале, но только
+если год не високосный"""
         if len(args) == 3 and all(isinstance(i, int) for i in args):
             self.year = int(args[2])
             self.month = int(args[1])
@@ -37,14 +41,13 @@ class Date:
         else:
             raise ValueError("Incorrect init value")
 
-
     def __str__(self) -> str:
         """Возвращает дату в формате dd.mm.yyyy"""
         return f"{self.day:02d}.{self.month:02d}.{self.year:04d}"
 
     def __repr__(self) -> str:
         """Возвращает дату в формате Date(day, month, year)"""
-        return f"Date({self.day}, {self._month}, {self._year})"
+        return f"Date({self._day}, {self._month}, {self._year})"
 
 
     @classmethod
@@ -76,6 +79,7 @@ class Date:
 
     @property
     def day(self):
+        #print(self.day)
         return self._day
 
     @day.setter
@@ -110,6 +114,7 @@ class Date:
 
     def __sub__(self, other: "Date") -> int:
         """Разница между датой self и other (-)"""
+
         days_my = self.day
         days_other = other.day
         for ye in range(self.year):
@@ -131,45 +136,27 @@ class Date:
 
     def __add__(self, other: TimeDelta) -> "Date":
         """Складывает self и некий timedeltа. Возвращает НОВЫЙ инстанс Date, self не меняет (+)"""
-        day = self.day
-        month = self.month
-        year = self.year
 
-        all_days = other.day
-        for i in range(other.month):
-            all_days += self.days[i]
-        if other.month > 2:
-            all_days += 1
-
-        """TODO понять это"""
-        for ye in range(self.year):
-            all_days += 366 if self.is_leap_year(ye) else 365
-
-        for i in range(0, all_days):
-            day += 1
-            if self.is_leap_year(year):
-                if day > self.days_leap[month - 1]:
-                    day = 1
-                    month += 1
-                    if month > 12:
-                        month = 1
-                        year += 1
-            else:
-                if day > self.days[month - 1]:
-                    day = 1
-                    month += 1
-                    if month > 12:
-                        month = 1
-                        year += 1
-
-        return Date(day, month, year)
-
+        c = Date(self.day, self.month, self.year)
+        c += other
+        return c
 
     def __iadd__(self, other: TimeDelta) -> "Date":
         """Добавляет к self некий timedelta меняя сам self (+=)"""
-        return self + other
 
-
+        self.year += other.year
+        self._month += other.month  # если month (без _) то он проверит его в сеттере и выкинет error
+        self._day += other.day
+        while self._month > 12:
+            self.year += 1
+            self._month -= 12
+        while self._day > self.get_max_day(self.month, self.year):
+            self._day -= self.get_max_day(self.month, self.year)
+            self._month += 1
+            if self._month > 12:
+                self.year += 1
+                self._month -= 12
+        return self
 
 
 def main():
@@ -177,12 +164,16 @@ def main():
     logger.setLevel(logging.DEBUG)
     logger.debug("start main")
     d1 = Date(30, 12, 2021)
+    print(d1)
+    print(str(d1))
+    d3 = Date("30.12.2021")
+    print(d1.day)
     d1.day = 31
     d2 = Date(1, 2, 2020)
     d2.day = 29
-    # d1 += TimeDelta(1)
-    print(repr(d1-d2))
-    print(d2)
+    d1 += TimeDelta(1)
+    # print(repr(d1-d2))
+    print(d1)
 
 if __name__ == "__main__":
     main()

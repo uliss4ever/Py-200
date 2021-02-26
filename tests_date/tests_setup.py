@@ -1,12 +1,14 @@
 import pytest
 from Date.Date import Date, TimeDelta
 
-@pytest.mark.parametrize("day", [
-    2, 14, 8, 19, 25, 29
-])
-def test_create_date(day):
-    date = Date(day)
-    assert date.day == day
+#from Date.Date import Date, TimeDelta
+
+
+@pytest.mark.parametrize("day,month,year,expected", [(1, 12, 2020, "01.12.2020")])
+def test_create_date(day, month, year, expected):
+    date = Date(day, month, year)
+    print(date.day)
+    assert str(date) == expected
 
 @pytest.mark.parametrize("date, delta, expected", [
     ("20.07.2002", (1, 0, 0), "21.07.2002"),
@@ -29,5 +31,5 @@ def test_sub(date1, date2, expected):
     assert d3 == expected
 
 
-# if __name__ == '__main__':
-#     main()
+#if __name__ == '__main__':
+    #test_sub(1, 12, 2021)
