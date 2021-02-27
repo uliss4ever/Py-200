@@ -1,6 +1,8 @@
 from typing import Optional, overload
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class TimeDelta:
     def __init__(self, days: Optional[int] = None, months: Optional[int] = None, years: Optional[int] = None):
@@ -35,9 +37,11 @@ class Date:
             self.day = int(args[0])
         elif len(args) == 1 and isinstance(args[0], str):
             values = args[0].split('.')
+
             if len(values) != 3:
                 raise ValueError("Incorrect init value")
-            self.day, self.month, self.year = int(values[0]), int(values[1]), int(values[2])
+
+            self.year, self.month, self.day = int(values[2]), int(values[1]), int(values[0])
         else:
             raise ValueError("Incorrect init value")
 
@@ -49,13 +53,12 @@ class Date:
         """Возвращает дату в формате Date(day, month, year)"""
         return f"Date({self._day}, {self._month}, {self._year})"
 
-
     @classmethod
     def is_leap_year(cls, year) -> bool:
         """Проверяет, является ли год високосным"""
         if not isinstance(year, int):
             raise ValueError
-        if year % 4 != 0 or (year % 100 == 0 and year % 400 != 0): # надо ли тут cls.year или просто year
+        if year % 4 != 0 or (year % 100 == 0 and year % 400 != 0):  # надо ли тут cls.year или просто year
             return False
         return True
 
@@ -79,7 +82,6 @@ class Date:
 
     @property
     def day(self):
-        #print(self.day)
         return self._day
 
     @day.setter
@@ -89,8 +91,6 @@ class Date:
             raise ValueError("Incorrect day")
         self._day = value
 
-
-
     @property
     def month(self):
         return self._month
@@ -98,10 +98,11 @@ class Date:
     @month.setter
     def month(self, value: int):
         """value от 1 до 12. Проверять значение и корректность даты"""
-        if 1 <= value <= 12:
+        if 1 <= value <= 12: #and self.is_valid_date(self.day, value, self.year):
             self._month = value
         else:
             raise ValueError("Incorrect month")
+
 
     @property
     def year(self):
@@ -164,16 +165,19 @@ def main():
     logger.setLevel(logging.DEBUG)
     logger.debug("start main")
     d1 = Date(30, 12, 2021)
-    print(d1)
-    print(str(d1))
+    # print(d1)
+    # print(str(d1))
     d3 = Date("30.12.2021")
-    print(d1.day)
+    # print(d1.day)
     d1.day = 31
-    d2 = Date(1, 2, 2020)
-    d2.day = 29
+    d2 = Date(31, 1, 2020)
+    # d2.day = 29
     d1 += TimeDelta(1)
+    d2.month = 2
+    print(d2)
     # print(repr(d1-d2))
-    print(d1)
+    # print(d1)
+
 
 if __name__ == "__main__":
     main()
