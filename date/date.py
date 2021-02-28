@@ -87,7 +87,7 @@ class Date:
     @day.setter
     def day(self, value: int):
         """value от 1 до 31. Проверять значение и корректность даты"""
-        if not Date.is_valid_date(value, self.month, self.year):
+        if not self.is_valid_date(value, self.month, self.year): # self.is_valid.. or Date
             raise ValueError("Incorrect day")
         self._day = value
 
@@ -98,10 +98,13 @@ class Date:
     @month.setter
     def month(self, value: int):
         """value от 1 до 12. Проверять значение и корректность даты"""
-        if 1 <= value <= 12: #and self.is_valid_date(self.day, value, self.year):
+        if 1 <= value <= 12:
             self._month = value
+            if not self.is_valid_date(self.day, value, self.year):
+                raise ValueError
         else:
             raise ValueError("Incorrect month")
+
 
 
     @property
@@ -112,6 +115,8 @@ class Date:
     def year(self, value: int):
         """value от 1 до ... . Проверять значение и корректность даты"""
         self._year = value
+        if not self.is_valid_date(self.day, self.month, value):
+            raise ValueError
 
     def __sub__(self, other: "Date") -> int:
         """Разница между датой self и other (-)"""
@@ -174,7 +179,7 @@ def main():
     # d2.day = 29
     d1 += TimeDelta(1)
     d2.month = 2
-    print(d2)
+    print(d2.day)
     # print(repr(d1-d2))
     # print(d1)
 
