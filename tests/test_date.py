@@ -14,7 +14,8 @@ def test_create_date(day, month, year, expected):
 ])
 def test_time_delta(date, delta, expected):
     d = Date(date)
-    t = TimeDelta(delta[0], delta[1], delta[2])
+    # t = TimeDelta(delta[0], delta[1], delta[2])
+    t = TimeDelta(*delta)
     new_d = d + t
     assert str(new_d) == expected
     # assert new_d.__str__() == expected  # не надо вызывать магические методы напрямую
