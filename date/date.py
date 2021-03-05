@@ -19,7 +19,7 @@ class Date:
     days_leap = (31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
 
     @overload
-    def __init__(self, day: int , month: int, year: int):
+    def __init__(self, day: int, month: int, year: int):
         """Создание даты из трех чисел"""
 
     @overload
@@ -37,6 +37,8 @@ class Date:
                 self._year_value = int(args[2])
                 self._month_value = int(args[1])
                 self._day_value = int(args[0])
+            else:
+                raise ValueError('Incorrect date')     # что лучше сказать
         elif len(args) == 1 and isinstance(args[0], str):
             values = args[0].split('.')
 
@@ -47,6 +49,8 @@ class Date:
                 self._year_value = int(values[2])
                 self._month_value = int(values[1])
                 self._day_value = int(values[0])
+            else:
+                raise ValueError('Incorrect date')
         else:
             raise ValueError("Incorrect init value")
 
@@ -78,15 +82,23 @@ class Date:
     @classmethod
     def is_valid_date(cls, day: int, month: int, year: int):
         """Проверяет, является ли дата корректной"""
-        if  (month) < 1 or  (month) > 12:
+        if month < 1 or month > 12:
             return False
-        if  (day) < 0 or  (day) > cls.get_max_day(month, year):
+        if day < 0 or day > cls.get_max_day(month, year):
             return False
         return True
 
-    @classmethod
-    def days_counter(cls, day: int, month: int, year: int):
+
+    def days_counter(self):
         """Считает общее количество дней"""
+        days = self.day
+        for ye in range(self.year):
+            days += 366 if self.is_leap_year(ye) else 365
+        for i in range(self.month - 1):
+            days += self.days[i]
+        if self.is_leap_year(self.year) and self.month > 2:
+            days += 1
+        return days
 
     @property
     def day(self):
@@ -95,7 +107,7 @@ class Date:
     @day.setter
     def day(self, value: int):
         """value от 1 до 31. Проверять значение и корректность даты"""
-        if not self.is_valid_date(value, self.month, self.year): # self.is_valid.. or Date
+        if not self.is_valid_date(value, self.month, self.year):  # self.is_valid.. or Date
             raise ValueError("Incorrect day")
         self._day_value = value
 
@@ -108,12 +120,8 @@ class Date:
         """value от 1 до 12. Проверять значение и корректность даты"""
 
         if not self.is_valid_date(self.day, value, self.year):
-            raise ValueError
+            raise ValueError("Incorrect month")
         self._month_value = value
-        # else:
-        #     raise ValueError("Incorrect month")
-
-
 
     @property
     def year(self):
@@ -123,32 +131,13 @@ class Date:
     def year(self, value: int):
         """value от 1 до ... . Проверять значение и корректность даты"""
         if not self.is_valid_date(self.day, self.month, value):
-            raise ValueError
+            raise ValueError("Incorrect year")
         self._year_value = value
-
-
 
     def __sub__(self, other: "Date") -> int:
         """Разница между датой self и other (-)"""
+        return self.days_counter() - other.days_counter()
 
-        days_my = self.day
-        days_other = other.day
-        for ye in range(self.year):
-            days_my += 366 if self.is_leap_year(ye) else 365
-        for ye in range(other.year):
-            days_other += 366 if self.is_leap_year(ye) else 365
-
-        for i in range(self.month - 1):
-            days_my += self.days[i]
-        for i in range(other.month - 1):
-            days_other += other.days[i]
-
-        if self.is_leap_year(self.year) and self.month > 2:
-            days_my += 1
-        if self.is_leap_year(other.year) and other.month > 2:
-            days_other += 1
-
-        return days_my - days_other
 
     def __add__(self, other: TimeDelta) -> "Date":
         """Складывает self и некий timedeltа. Возвращает НОВЫЙ инстанс Date, self не меняет (+)"""
@@ -182,7 +171,9 @@ def main():
     d1 = Date(30, 12, 2021)
     # print(d1)
     # print(str(d1))
-    d3 = Date("30.12.2021")
+    d3 = Date("29.02.2020")
+    d3.year = 2021
+    print(d3)
     # print(d1.day)
     d1.day = 31
     d2 = Date(31, 1, 2020)
